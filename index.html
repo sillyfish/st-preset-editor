@@ -36,12 +36,12 @@ body{
 .strip{position:sticky;top:46px;z-index:29;background:var(--bg);
   border-bottom:1px solid var(--line);padding:0 6px;
   display:flex;align-items:flex-end;justify-content:space-between;gap:6px;}
-.tabs{display:flex;gap:2px;}
+.tabs{display:flex;gap:1px;flex-shrink:0;}
 .tab{appearance:none;border:none;background:none;cursor:pointer;font-family:inherit;
-  color:var(--faint);font-size:15.5px;font-weight:600;letter-spacing:.03em;
-  padding:12px 9px 11px;position:relative;transition:color .22s;}
+  color:var(--faint);font-size:14px;font-weight:600;letter-spacing:.01em;white-space:nowrap;
+  padding:12px 7px 11px;position:relative;transition:color .22s;}
 .tab.on{color:var(--ink);}
-.tab.on::after{content:"";position:absolute;left:9px;right:9px;bottom:-1px;height:2px;
+.tab.on::after{content:"";position:absolute;left:7px;right:7px;bottom:-1px;height:2px;
   background:var(--ink);border-radius:2px;}
 .icons{display:flex;align-items:center;gap:0;padding-bottom:4px;flex-wrap:wrap;
   justify-content:flex-end;}
@@ -247,12 +247,22 @@ body{
   max-width:360px;border:1px solid var(--line);}
 .card h3{margin:0 0 4px;font-size:15px;}
 .card p{margin:0 0 14px;font-size:12px;color:var(--muted);line-height:1.6;}
+#introBody{max-height:60vh;overflow:auto;margin:2px 0 12px;}
+#introBody p{margin:.55em 0;font-size:12.5px;color:var(--muted);line-height:1.65;}
+#introBody b{color:var(--ink);font-weight:600;}
 .fi{width:100%;padding:10px 12px;border:1px solid var(--line);border-radius:9px;
   background:var(--raised);color:var(--ink);font-size:14px;font-family:inherit;
   outline:none;margin-bottom:14px;}
 .fi:focus{border-color:var(--ink);}
 .orphan{margin:20px 0 0;padding-top:12px;border-top:1px dashed var(--line);}
 .orphan h4{font-size:11px;color:var(--muted);font-weight:500;margin:0 0 6px 14px;}
+/* 条目行右缘的无痕"跳到预览"区（不到 1/4 宽） */
+.jumpz{flex:0 0 46px;align-self:stretch;background:none;border:none;cursor:pointer;padding:0;}
+
+/* 模式切换的原生变形过渡 */
+::view-transition-group(vtitem){animation-duration:.34s;}
+::view-transition-old(root),::view-transition-new(root){animation-duration:.28s;}
+
 .hide{display:none !important;}
 @media(prefers-reduced-motion:reduce){*{transition:none !important;animation:none !important;}}
 </style>
@@ -348,7 +358,7 @@ const store={
 /* ---- 状态 ---- */
 let S={preset:null,prompts:[],order:[],fileName:"preset.json",dirty:false,
   view:"list",pmode:"macro",md:false,hideOff:false,expanded:{},renaming:null,
-  selecting:false,selected:[],moving:false,flash:null,theme:"light",
+  selecting:false,selected:[],moving:false,placing:false,flash:null,theme:"light",
   search:{q:"",cs:true,rep:""}};
 
 /* ---- 工具 ---- */
@@ -600,14 +610,15 @@ function toggleEnabled(id){
 function cycleRole(id){
   const p=P(id);p.role=ROLES[(ROLES.indexOf(p.role||"system")+1)%3];touch();render();
 }
-function addEntry(){
+function placeNewBelow(targetId){
   const p={identifier:uuid(),system_prompt:false,enabled:true,marker:false,
     name:"新条目",role:"system",content:"",injection_position:0,injection_depth:4,
     injection_order:100,injection_trigger:[],forbid_overrides:false,
     attach_role:"user",attach_index:1,attach_side:"end"};
   S.prompts.push(p);
-  S.order.splice(Math.floor(S.order.length/2),0,{identifier:p.identifier,enabled:true});
-  S.expanded[p.identifier]=true;S.renaming=p.identifier;
+  const at=S.order.findIndex(o=>o.identifier===targetId);
+  S.order.splice(at<0?S.order.length:at+1,0,{identifier:p.identifier,enabled:true});
+  S.placing=false;S.expanded[p.identifier]=true;S.renaming=p.identifier;
   touch();render();
   const el=document.querySelector('[data-row="'+p.identifier+'"]');
   if(el)el.scrollIntoView({behavior:"smooth",block:"center"});
@@ -631,18 +642,43 @@ function moveBelow(target){
   const n=picked.length;S.selected=[];S.selecting=false;S.moving=false;
   touch();render();toast("移动了 "+n+" 个条目");
 }
+/* 两模式间"同一条目变形"过渡：原生 View Transitions，不支持/减动时自动瞬切 */
+function prefersReduced(){
+  return window.matchMedia&&window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+}
+function morphSwitch(id,mutate){
+  const sel='[data-row="'+id+'"],[data-seg="'+id+'"]';
+  const scrollTo=()=>{const el=document.querySelector(sel);if(el)el.scrollIntoView({block:"center"});};
+  if(!document.startViewTransition||prefersReduced()){mutate();requestAnimationFrame(scrollTo);return;}
+  const oldEl=document.querySelector(sel);
+  if(oldEl)oldEl.style.viewTransitionName="vtitem";
+  const vt=document.startViewTransition(()=>{
+    mutate();
+    const nel=document.querySelector(sel);
+    if(nel){nel.style.viewTransitionName="vtitem";scrollTo();}
+  });
+  const clean=()=>{const e=document.querySelector(sel);if(e)e.style.viewTransitionName="";};
+  if(vt&&vt.finished&&vt.finished.then)vt.finished.then(clean,clean);
+}
 function jumpTo(id){
-  S.view="list";
-  const o=S.order.find(x=>x.identifier===id);
-  if(S.hideOff&&o&&!o.enabled)S.hideOff=false;   /* 仅当目标被隐藏时才取消隐藏 */
-  S.expanded[id]=true;S.flash=id;S.selecting=false;S.moving=false;
-  render();
-  requestAnimationFrame(()=>{                     /* 等布局定稿再滚，配合 scroll-margin-top */
-    const el=document.querySelector('[data-row="'+id+'"]');
-    if(el)el.scrollIntoView({behavior:"smooth",block:"start"});
+  morphSwitch(id,()=>{
+    S.view="list";
+    const o=S.order.find(x=>x.identifier===id);
+    if(S.hideOff&&o&&!o.enabled)S.hideOff=false;   /* 仅当目标被隐藏时才取消隐藏 */
+    S.expanded[id]=true;S.flash=id;S.selecting=false;S.moving=false;
+    render();
   });
   setTimeout(()=>{S.flash=null;const e2=document.querySelector('[data-row="'+id+'"]');
     if(e2)e2.classList.remove("flash");},1600);
+}
+function jumpToPreview(id){
+  morphSwitch(id,()=>{
+    S.view="preview";
+    const o=S.order.find(x=>x.identifier===id);
+    if(S.hideOff&&o&&!o.enabled)S.hideOff=false;
+    S.selecting=false;S.selected=[];S.moving=false;
+    render();
+  });
 }
 
 /* ---- 渲染 ---- */
@@ -675,7 +711,8 @@ function render(){
   bs.classList.toggle("on",S.selecting);
   bs.title=S.selecting?"取消选择":"选条目";
 
-  document.getElementById("btnAdd").classList.toggle("hide",!isList);
+  const ba=document.getElementById("btnAdd");
+  ba.classList.toggle("hide",!isList);ba.classList.toggle("on",S.placing);
   bs.classList.toggle("hide",!isList);
 
   const bp=document.getElementById("btnPmode");
@@ -700,10 +737,11 @@ function render(){
 function renderList(main){
   const wrap=document.createElement("div");wrap.className="list";
 
-  if(S.moving){
+  if(S.moving||S.placing){
     const bar=document.createElement("div");bar.className="movebar";
-    bar.innerHTML="点任意条目，把选中的 <b>"+S.selected.length+"</b> 条插到它下方"+
-      "<br>（灰掉的就是要移动的那几条）";
+    bar.innerHTML=S.placing
+      ?"选一个条目，<b>新条目</b>就插到它下方"
+      :"点任意条目，把选中的 <b>"+S.selected.length+"</b> 条插到它下方<br>（灰掉的就是要移动的那几条）";
     wrap.appendChild(bar);
   }
 
@@ -711,12 +749,13 @@ function renderList(main){
     const p=r.p,mk=!!p.marker,open=!!S.expanded[p.identifier],
           sel=S.selected.includes(p.identifier);
 
-    /* 移动模式：整条 = 落点，点它就把选中的插到下方 */
-    if(S.moving){
+    /* 移动 / 新建：整条 = 落点，点它就插到下方 */
+    if(S.moving||S.placing){
+      const picked=S.moving&&sel;
       const row=document.createElement("div");
-      row.className="row"+(sel?" picked":" target")+(S.flash===p.identifier?" flash":"");
+      row.className="row"+(picked?" picked":" target")+(S.flash===p.identifier?" flash":"");
       row.dataset.row=p.identifier;
-      if(!sel)row.onclick=()=>moveBelow(p.identifier);
+      if(!picked)row.onclick=()=>S.placing?placeNewBelow(p.identifier):moveBelow(p.identifier);
       const rail=document.createElement("div");
       rail.className="rail"+(r.enabled?"":" off")+(mk?" locked":"");
       const body=document.createElement("div");body.className="body";
@@ -784,6 +823,12 @@ function renderList(main){
         };
       }
       head.appendChild(nm);
+    }
+    if(!S.selecting){
+      const jz=document.createElement("button");
+      jz.className="jumpz";jz.setAttribute("aria-label","跳到预览");
+      jz.onclick=e=>{e.stopPropagation();jumpToPreview(p.identifier);};
+      head.appendChild(jz);
     }
     body.appendChild(head);
 
@@ -976,8 +1021,15 @@ function openInfo(){
   box.innerHTML=`<div class="modal"><div class="card">
     <h3>ST 预设编辑器 · 使用说明</h3>
     <div id="introBody">
-      <!-- TODO 教程内容以后写在这个 div 里 -->
-      <p>（这里之后写使用说明～现在先留个空位）</p>
+      <p>手机上改 SillyTavern 预设的小工具。几个<b>不太直观</b>的地方先说一下：</p>
+      <p><b>左侧竖线就是开关</b>：实线=启用、虚线=未启用，<b>点竖线</b>切换。Chat History 等标记条目的线是锁死的，切不了。</p>
+      <p><b>点条目名字</b>展开改内容；<b>双击名字</b>改名。</p>
+      <p><b>名字最右边一小块</b>点一下，跳到「预览」里对应的位置；在「预览」里<b>点左边的条目名</b>又能跳回该条目。</p>
+      <p>顶部三个模式：<b>条目</b>（一条条改）、<b>预览</b>（看拼起来的整段）、<b>全局</b>（搜索 / 替换等）。</p>
+      <p>预览里有 <b>宏 ↔ 替换</b> 切换（把 {{getvar}} 之类展开成实际值，点变量小块还能改值），和 <b>Markdown</b> 只读排版预览。</p>
+      <p>顶栏：<b>撤回 / 重做</b>、<b>眼睛</b>=隐藏未启用、<b>Aa</b>=调字号行距、还有导入 / 导出。</p>
+      <p><b>加号</b>新建：点它之后选一个条目，新条目就插到那条下方。</p>
+      <p>你导入的预设只在你自己浏览器里处理，<b>不会上传</b>到任何地方。🐟</p>
     </div>
     <button class="ib on" id="introClose" style="width:100%;padding:10px;margin-top:4px">知道了</button>
   </div></div>`;
@@ -1174,6 +1226,13 @@ function renderGlobal(main){
 
 function renderFooter(){
   const f=document.getElementById("footer");
+  if(S.placing){
+    f.classList.remove("hide");
+    f.innerHTML='<span class="hint">选一个条目，新条目插到它下方</span>'+
+      '<button class="ib" id="fCancelPlace">取消</button>';
+    document.getElementById("fCancelPlace").onclick=()=>{S.placing=false;render();};
+    return;
+  }
   if(!S.selecting){f.classList.add("hide");f.innerHTML="";return;}
   f.classList.remove("hide");
   if(S.moving){
@@ -1194,7 +1253,7 @@ function renderFooter(){
 }
 
 /* ---- 绑定 ---- */
-function setView(v){S.view=v;S.selecting=false;S.selected=[];S.moving=false;
+function setView(v){S.view=v;S.selecting=false;S.selected=[];S.moving=false;S.placing=false;
   if(typeof closeVarPop==="function")closeVarPop();render();}
 document.getElementById("tabGlobal").onclick=()=>setView("global");
 document.getElementById("btnPmode").onclick=()=>{
@@ -1206,9 +1265,11 @@ document.getElementById("fileSwap").onchange=e=>e.target.files[0]&&importFile(e.
 document.getElementById("tabList").onclick=()=>setView("list");
 document.getElementById("tabPrev").onclick=()=>setView("preview");
 document.getElementById("btnHide").onclick=()=>withAnchor(()=>{S.hideOff=!S.hideOff;render();});
-document.getElementById("btnAdd").onclick=addEntry;
+document.getElementById("btnAdd").onclick=()=>{
+  closeVarPop();S.placing=!S.placing;S.selecting=false;S.selected=[];S.moving=false;render();
+};
 document.getElementById("btnSelect").onclick=()=>{
-  S.selecting=!S.selecting;S.selected=[];S.moving=false;render();
+  S.selecting=!S.selecting;S.selected=[];S.moving=false;S.placing=false;render();
 };
 document.getElementById("btnExport").onclick=openExport;
 document.getElementById("btnUndo").onclick=undo;
@@ -1291,5 +1352,6 @@ document.getElementById("lblImport").insertAdjacentHTML("afterbegin",IC.import);
   }
 })();
 </script>
+<script data-goatcounter="https://sillyfish.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>
 </body>
 </html>
