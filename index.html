@@ -38,10 +38,10 @@ body{
   display:flex;align-items:flex-end;justify-content:space-between;gap:6px;}
 .tabs{display:flex;gap:2px;}
 .tab{appearance:none;border:none;background:none;cursor:pointer;font-family:inherit;
-  color:var(--faint);font-size:16px;font-weight:600;letter-spacing:.08em;
-  padding:12px 14px 11px;position:relative;transition:color .22s;}
+  color:var(--faint);font-size:15.5px;font-weight:600;letter-spacing:.03em;
+  padding:12px 9px 11px;position:relative;transition:color .22s;}
 .tab.on{color:var(--ink);}
-.tab.on::after{content:"";position:absolute;left:14px;right:14px;bottom:-1px;height:2px;
+.tab.on::after{content:"";position:absolute;left:9px;right:9px;bottom:-1px;height:2px;
   background:var(--ink);border-radius:2px;}
 .icons{display:flex;align-items:center;gap:0;padding-bottom:4px;flex-wrap:wrap;
   justify-content:flex-end;}
@@ -179,6 +179,51 @@ body{
 .vpop .vrow .ib{flex:1;padding:9px;text-align:center;}
 .vpop .note{font-size:11.5px;color:var(--muted);line-height:1.6;margin:0;}
 
+/* ---- 全局页 ---- */
+.global{padding:14px 14px 48px;max-width:640px;margin:0 auto;}
+.gcard{border:1px solid var(--line);border-radius:12px;padding:14px;margin-bottom:12px;
+  background:var(--surface);}
+.gcard h4{margin:0 0 10px;font-size:13px;font-weight:600;display:flex;align-items:center;gap:8px;}
+.gcard.soon{opacity:.7;}
+.gcard .note{font-size:12px;color:var(--muted);line-height:1.6;margin:0;}
+.sbadge{font-size:10px;color:var(--muted);border:1px solid var(--line);border-radius:6px;
+  padding:1px 6px;font-weight:400;letter-spacing:.02em;}
+.srow{display:flex;gap:8px;align-items:center;margin-bottom:10px;}
+.srow .fi{margin-bottom:0;flex:1;}
+.scount{font-size:11px;color:var(--muted);margin:2px 0 8px;}
+.sresults{margin:0 -6px;}
+.sitem{padding:9px 6px;border-top:1px solid var(--line);cursor:pointer;}
+.sitem:active{background:var(--sel);}
+.sitem .nm{font-size:13px;color:var(--ink);display:flex;align-items:center;gap:6px;
+  flex-wrap:wrap;}
+.sitem .nm.off{color:var(--faint);}
+.sitem .snip{font-size:11.5px;color:var(--muted);white-space:pre-wrap;word-break:break-all;
+  margin-top:4px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;line-height:1.5;}
+.sitem mark{background:var(--sel);color:var(--ink);border-radius:2px;padding:0 1px;}
+.sdiv{border-top:1px dashed var(--line);margin:12px 0;}
+
+/* ---- Markdown 只读渲染 ---- */
+.mdview{flex:1;min-width:0;padding:2px 4px 2px 16px;font-size:var(--fs);line-height:var(--lh);
+  font-family:Georgia,"Songti SC","Noto Serif SC",ui-serif,serif;word-break:break-word;
+  transition:color .3s,opacity .3s;}
+.mdview.off{color:var(--faint);opacity:.6;}
+.mdview>:first-child{margin-top:0;} .mdview>:last-child{margin-bottom:0;}
+.mdview h1,.mdview h2,.mdview h3,.mdview h4,.mdview h5,.mdview h6{margin:.5em 0 .3em;
+  line-height:1.3;font-weight:700;}
+.mdview h1{font-size:1.5em;} .mdview h2{font-size:1.3em;} .mdview h3{font-size:1.15em;}
+.mdview p{margin:.4em 0;}
+.mdview ul,.mdview ol{margin:.4em 0;padding-left:1.5em;}
+.mdview li{margin:.15em 0;}
+.mdview blockquote{margin:.4em 0;padding-left:.8em;border-left:2px solid var(--line);
+  color:var(--muted);}
+.mdview code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:.86em;
+  background:var(--raised);padding:0 3px;border-radius:3px;}
+.mdview pre{background:var(--raised);padding:9px 11px;border-radius:7px;overflow-x:auto;margin:.5em 0;}
+.mdview pre code{background:none;padding:0;}
+.mdview hr{border:none;border-top:1px solid var(--line);margin:.7em 0;}
+.mdview a{color:var(--ink);text-decoration:underline;}
+.mdview strong{font-weight:700;} .mdview em{font-style:italic;} .mdview del{text-decoration:line-through;}
+
 /* ---- 底栏 / 提示 / 弹窗 ---- */
 .footer{position:fixed;bottom:0;left:0;right:0;z-index:40;background:var(--surface);
   border-top:1px solid var(--line);
@@ -227,10 +272,12 @@ body{
   <div class="tabs">
     <button class="tab on" id="tabList">条目</button>
     <button class="tab" id="tabPrev">预览</button>
+    <button class="tab" id="tabGlobal">全局</button>
   </div>
   <div class="icons">
     <button class="ic" id="btnTypo" title="字号 / 行距"></button>
     <button class="ic hide" id="btnPmode" title="宏 / 替换"></button>
+    <button class="ic hide" id="btnMd" title="Markdown 预览"></button>
     <button class="ic" id="btnHide" title="隐藏未启用"></button>
     <button class="ic" id="btnAdd" title="新条目"></button>
     <button class="ic" id="btnSelect" title="选条目"></button>
@@ -281,6 +328,7 @@ const IC={
   info:SA+'<circle cx="12" cy="12" r="9"/><path d="M12 11v5"/><path d="M12 7.7h.01"/></svg>',
   braces:SA+'<path d="M9 4c-2 0-2.4 1-2.4 3v2c0 1.5-.7 2.4-2 2.9 1.3.5 2 1.4 2 2.9v2c0 2 .4 3 2.4 3"/><path d="M15 4c2 0 2.4 1 2.4 3v2c0 1.5.7 2.4 2 2.9-1.3.5-2 1.4-2 2.9v2c0 2-.4 3-2.4 3"/></svg>',
   txt:SA+'<path d="M5 6.5h14"/><path d="M5 12h14"/><path d="M5 17.5h9"/></svg>',
+  md:SA+'<rect x="3" y="6.5" width="18" height="11" rx="2.4"/><path d="M6.5 14.6V9.4l2.4 2.9 2.4-2.9v5.2"/><path d="M15.6 9.4v4.1"/><path d="M13.7 11.6l1.9 2 1.9-2"/></svg>',
   moon:SA+'<path d="M20 14.6A8 8 0 1 1 9.4 4 6.3 6.3 0 0 0 20 14.6Z"/></svg>',
   sun:SA+'<circle cx="12" cy="12" r="4"/><path d="M12 2.6v2.1"/><path d="M12 19.3v2.1"/><path d="M4.7 4.7 6.2 6.2"/><path d="M17.8 17.8l1.5 1.5"/><path d="M2.6 12h2.1"/><path d="M19.3 12h2.1"/><path d="M4.7 19.3 6.2 17.8"/><path d="M17.8 6.2l1.5-1.5"/></svg>',
 };
@@ -299,8 +347,9 @@ const store={
 
 /* ---- 状态 ---- */
 let S={preset:null,prompts:[],order:[],fileName:"preset.json",dirty:false,
-  view:"list",pmode:"macro",hideOff:false,expanded:{},renaming:null,
-  selecting:false,selected:[],moving:false,flash:null,theme:"light"};
+  view:"list",pmode:"macro",md:false,hideOff:false,expanded:{},renaming:null,
+  selecting:false,selected:[],moving:false,flash:null,theme:"light",
+  search:{q:"",cs:true,rep:""}};
 
 /* ---- 工具 ---- */
 const uuid=()=>crypto.randomUUID?crypto.randomUUID():
@@ -611,30 +660,40 @@ function render(){
   document.getElementById("btnUndo").classList.remove("hide");
   document.getElementById("btnRedo").classList.remove("hide");
   updateUndoBtns();
-  document.getElementById("tabList").classList.toggle("on",S.view==="list");
-  document.getElementById("tabPrev").classList.toggle("on",S.view!=="list");
+  const isList=S.view==="list",isPrev=S.view==="preview",isGlob=S.view==="global";
+  document.getElementById("tabList").classList.toggle("on",isList);
+  document.getElementById("tabPrev").classList.toggle("on",isPrev);
+  document.getElementById("tabGlobal").classList.toggle("on",isGlob);
 
   const bh=document.getElementById("btnHide");
   bh.innerHTML=S.hideOff?IC.eyeOff:IC.eyeOn;
   bh.title=S.hideOff?"显示未启用":"隐藏未启用";
   bh.classList.toggle("on",S.hideOff);
+  bh.classList.toggle("hide",isGlob);
 
   const bs=document.getElementById("btnSelect");
   bs.classList.toggle("on",S.selecting);
   bs.title=S.selecting?"取消选择":"选条目";
 
-  document.getElementById("btnAdd").classList.toggle("hide",S.view!=="list");
-  bs.classList.toggle("hide",S.view!=="list");
+  document.getElementById("btnAdd").classList.toggle("hide",!isList);
+  bs.classList.toggle("hide",!isList);
 
   const bp=document.getElementById("btnPmode");
-  bp.classList.toggle("hide",S.view!=="preview");
+  bp.classList.toggle("hide",!isPrev||S.md);
   bp.innerHTML=S.pmode==="expand"?IC.txt:IC.braces;
   bp.title=S.pmode==="expand"?"当前：替换展开（点切回宏原文）":"当前：宏原文（点切到替换展开）";
+
+  const bm=document.getElementById("btnMd");
+  bm.classList.toggle("hide",!isPrev);
+  bm.classList.toggle("on",S.md);
+  bm.title=S.md?"Markdown 预览（点关闭）":"Markdown 预览";
 
   document.getElementById("dirty").classList.toggle("show",S.dirty);
 
   main.innerHTML="";
-  S.view==="list"?renderList(main):renderPreview(main);
+  if(isList)renderList(main);
+  else if(isPrev)renderPreview(main);
+  else renderGlobal(main);
   renderFooter();
 }
 
@@ -764,6 +823,7 @@ function renderList(main){
 }
 
 function renderPreview(main){
+  if(S.md)return renderPreviewMD(main);
   if(S.pmode==="expand")return renderPreviewExpand(main);
   renderPreviewMacro(main);
 }
@@ -771,7 +831,7 @@ function renderPreviewMacro(main){
   const wrap=document.createElement("div");wrap.className="pv";
   rows().forEach(r=>{
     const p=r.p,off=!r.enabled;
-    const seg=document.createElement("div");seg.className="seg";
+    const seg=document.createElement("div");seg.className="seg";seg.dataset.seg=p.identifier;
     if(p.marker)seg.style.margin="6px 0";
 
     const g=document.createElement("div");
@@ -809,7 +869,7 @@ function renderPreviewExpand(main){
   rows().forEach(r=>{
     const p=r.p,off=!r.enabled,seg=byId[p.identifier];
     if(!seg)return;
-    const row=document.createElement("div");row.className="seg";
+    const row=document.createElement("div");row.className="seg";row.dataset.seg=p.identifier;
     if(p.marker)row.style.margin="6px 0";
     const g=document.createElement("div");g.className="gut"+(off?" off":"");
     g.textContent=p.marker?"":p.name;g.onclick=()=>jumpTo(p.identifier);
@@ -948,6 +1008,170 @@ function openVarPop(chip){
   setTimeout(()=>document.addEventListener("click",vpopOutside,true),0);
 }
 
+/* 切换隐藏/模式时，锚定视口顶部的条目，重渲染后滚回原位，避免定位错乱 */
+function withAnchor(fn){
+  const sel=S.view==="list"?".row[data-row]":".seg[data-seg]";
+  const H=88;let id=null,prevTop=0;
+  for(const el of document.querySelectorAll(sel)){
+    const r=el.getBoundingClientRect();
+    if(r.bottom>H){id=el.dataset.row||el.dataset.seg;prevTop=r.top;break;}
+  }
+  fn();
+  if(id){
+    const el2=document.querySelector(S.view==="list"?'[data-row="'+id+'"]':'[data-seg="'+id+'"]');
+    if(el2){const d=el2.getBoundingClientRect().top-prevTop;if(d)window.scrollBy(0,d);}
+  }
+}
+
+/* ---- Markdown 只读渲染（展开后的最终文本）---- */
+function escHtml(s){return String(s).replace(/[&<>]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[c]));}
+function mdInline(s){ /* s 必须已 escHtml */
+  s=s.replace(/`([^`]+)`/g,'<code>$1</code>');
+  s=s.replace(/\*\*([^*]+)\*\*/g,'<strong>$1</strong>');
+  s=s.replace(/__([^_]+)__/g,'<strong>$1</strong>');
+  s=s.replace(/(^|[^*])\*([^*\n]+)\*/g,'$1<em>$2</em>');
+  s=s.replace(/~~([^~]+)~~/g,'<del>$1</del>');
+  s=s.replace(/\[([^\]]+)\]\(([^)\s]+)\)/g,'<a href="$2" target="_blank" rel="noopener">$1</a>');
+  return s;
+}
+const mdLine=raw=>mdInline(escHtml(raw));   /* 先逐行转义，再套内联样式 */
+function mdToHtml(src){
+  const lines=String(src).split(/\r?\n/);let html="",i=0;
+  const special=/^\s*(#{1,6}\s|>|```|([-*+]|\d+\.)\s|([-*_])\3{2,}\s*$)/;
+  while(i<lines.length){
+    const line=lines[i];
+    if(/^\s*```/.test(line)){const code=[];i++;
+      while(i<lines.length&&!/^\s*```/.test(lines[i])){code.push(lines[i]);i++;}
+      i++;html+='<pre><code>'+escHtml(code.join("\n"))+'</code></pre>';continue;}
+    const m=line.match(/^\s*(#{1,6})\s+(.*)$/);
+    if(m){html+='<h'+m[1].length+'>'+mdLine(m[2])+'</h'+m[1].length+'>';i++;continue;}
+    if(/^\s*>\s?/.test(line)){const q=[];
+      while(i<lines.length&&/^\s*>\s?/.test(lines[i])){q.push(mdLine(lines[i].replace(/^\s*>\s?/,"")));i++;}
+      html+='<blockquote>'+q.join("<br>")+'</blockquote>';continue;}
+    if(/^\s*([-*+]|\d+\.)\s+/.test(line)){const ord=/^\s*\d+\.\s+/.test(line);const items=[];
+      while(i<lines.length&&/^\s*([-*+]|\d+\.)\s+/.test(lines[i])){
+        items.push('<li>'+mdLine(lines[i].replace(/^\s*([-*+]|\d+\.)\s+/,""))+'</li>');i++;}
+      html+=(ord?'<ol>':'<ul>')+items.join("")+(ord?'</ol>':'</ul>');continue;}
+    if(/^\s*([-*_])\1{2,}\s*$/.test(line)){html+='<hr>';i++;continue;}
+    if(line.trim()===""){i++;continue;}
+    const para=[];
+    while(i<lines.length&&lines[i].trim()!==""&&!special.test(lines[i])){para.push(mdLine(lines[i]));i++;}
+    html+='<p>'+para.join("<br>")+'</p>';
+  }
+  return html;
+}
+function renderPreviewMD(main){
+  const wrap=document.createElement("div");wrap.className="pv";
+  const data=expandAll();const byId={};data.segs.forEach(s=>byId[s.id]=s);
+  rows().forEach(r=>{
+    const p=r.p,off=!r.enabled,seg=byId[p.identifier];if(!seg)return;
+    const row=document.createElement("div");row.className="seg";row.dataset.seg=p.identifier;
+    if(p.marker)row.style.margin="6px 0";
+    const g=document.createElement("div");g.className="gut"+(off?" off":"");
+    g.textContent=p.marker?"":p.name;g.onclick=()=>jumpTo(p.identifier);row.appendChild(g);
+    if(p.marker){const c=document.createElement("div");c.className="chip";
+      const s=document.createElement("span");s.textContent=p.name;c.appendChild(s);row.appendChild(c);}
+    else{const d=document.createElement("div");d.className="mdview"+(off?" off":"");
+      d.innerHTML=mdToHtml(seg.text);row.appendChild(d);}
+    wrap.appendChild(row);
+  });
+  const h=document.createElement("div");h.className="hint";
+  h.style.cssText="text-align:center;font-size:11px;margin-top:22px";
+  h.textContent="Markdown 只读预览 · 点侧边名字跳回条目";
+  wrap.appendChild(h);
+  main.appendChild(wrap);
+}
+
+/* ---- 全局页：搜索 / 替换（token、排 bug 占位）---- */
+function escRe(s){return s.replace(/[.*+?^${}()|[\]\\]/g,"\\$&");}
+function searchMatches(q,cs){
+  const needle=cs?q:q.toLowerCase();const out=[];
+  S.order.forEach(o=>{
+    const p=P(o.identifier);if(!p)return;
+    const name=p.name||"",content=p.content||"";
+    const nn=cs?name:name.toLowerCase(),hay=cs?content:content.toLowerCase();
+    const inName=nn.indexOf(needle)>=0;
+    let cnt=0,idx=hay.indexOf(needle);const first=idx;
+    while(idx>=0){cnt++;idx=hay.indexOf(needle,idx+needle.length);}
+    if(inName||cnt>0)out.push({id:p.identifier,name,off:!o.enabled,inName,cnt,
+      snippet:cnt>0?makeSnippet(content,first,q.length):""});
+  });
+  return out;
+}
+function makeSnippet(content,idx,len){
+  const a=Math.max(0,idx-16),b=Math.min(content.length,idx+len+22);
+  return (a>0?"…":"")+escHtml(content.slice(a,idx))+
+    "<mark>"+escHtml(content.substr(idx,len))+"</mark>"+
+    escHtml(content.slice(idx+len,b))+(b<content.length?"…":"");
+}
+function replaceAll(q,rep,cs){
+  if(!q)return 0;let total=0;
+  S.prompts.forEach(p=>{
+    if(typeof p.content!=="string"||p.content==="")return;
+    if(cs){const parts=p.content.split(q);
+      if(parts.length>1){total+=parts.length-1;p.content=parts.join(rep);}}
+    else{const re=new RegExp(escRe(q),"gi");let c=0;
+      const nc=p.content.replace(re,()=>{c++;return rep;});
+      if(c){total+=c;p.content=nc;}}
+  });
+  if(total)touch();
+  return total;
+}
+function renderSearchResults(wrap){
+  const res=wrap.querySelector("#gres"),cnt=wrap.querySelector("#gcount");
+  res.innerHTML="";
+  if(!S.search.q){cnt.textContent="";return;}
+  const list=searchMatches(S.search.q,S.search.cs);
+  const total=list.reduce((a,b)=>a+b.cnt,0);
+  cnt.textContent="命中 "+list.length+" 个条目，内容共 "+total+" 处";
+  list.forEach(m=>{
+    const it=document.createElement("div");it.className="sitem";
+    const nm=document.createElement("div");nm.className="nm"+(m.off?" off":"");
+    nm.innerHTML=escHtml(m.name)+
+      (m.inName?'<span class="sbadge">名称命中</span>':'')+
+      (m.cnt?'<span class="sbadge">内容×'+m.cnt+'</span>':'');
+    it.appendChild(nm);
+    if(m.snippet){const sn=document.createElement("div");sn.className="snip";
+      sn.innerHTML=m.snippet;it.appendChild(sn);}
+    it.onclick=()=>jumpTo(m.id);
+    res.appendChild(it);
+  });
+}
+function renderGlobal(main){
+  const wrap=document.createElement("div");wrap.className="global";
+  wrap.innerHTML=`<div class="gcard">
+      <h4>搜索 / 替换</h4>
+      <div class="srow">
+        <input class="fi" id="gq" placeholder="搜索条目名 / 提示词内容">
+        <button class="ib" id="gcs">区分大小写</button>
+      </div>
+      <div class="scount" id="gcount"></div>
+      <div class="sresults" id="gres"></div>
+      <div class="sdiv"></div>
+      <div class="srow">
+        <input class="fi" id="grep" placeholder="替换为…">
+        <button class="ib on" id="gdo">全部替换</button>
+      </div>
+      <p class="note">替换只作用于提示词内容（含未启用条目），区分大小写，算一步撤回。</p>
+    </div>
+    <div class="gcard soon"><h4>token 统计 <span class="sbadge">敬请期待</span></h4>
+      <p class="note">这里之后显示展开宏后、最终提示词的 token 粗估。</p></div>
+    <div class="gcard soon"><h4>排查问题 <span class="sbadge">敬请期待</span></h4>
+      <p class="note">这里之后检查：宏未闭合 {{、未知宏、XML 标签未闭合 等。</p></div>`;
+  main.appendChild(wrap);
+  const q=wrap.querySelector("#gq"),cs=wrap.querySelector("#gcs"),rep=wrap.querySelector("#grep");
+  q.value=S.search.q;rep.value=S.search.rep;cs.classList.toggle("on",S.search.cs);
+  q.oninput=()=>{S.search.q=q.value;renderSearchResults(wrap);};
+  cs.onclick=()=>{S.search.cs=!S.search.cs;cs.classList.toggle("on",S.search.cs);renderSearchResults(wrap);};
+  rep.oninput=()=>{S.search.rep=rep.value;};
+  wrap.querySelector("#gdo").onclick=()=>{
+    const n=replaceAll(S.search.q,S.search.rep,S.search.cs);
+    toast(n?("替换了 "+n+" 处"):"没找到可替换的");
+    if(n)renderSearchResults(wrap);
+  };
+  renderSearchResults(wrap);
+}
+
 function renderFooter(){
   const f=document.getElementById("footer");
   if(!S.selecting){f.classList.add("hide");f.innerHTML="";return;}
@@ -972,13 +1196,16 @@ function renderFooter(){
 /* ---- 绑定 ---- */
 function setView(v){S.view=v;S.selecting=false;S.selected=[];S.moving=false;
   if(typeof closeVarPop==="function")closeVarPop();render();}
+document.getElementById("tabGlobal").onclick=()=>setView("global");
 document.getElementById("btnPmode").onclick=()=>{
-  closeVarPop();S.pmode=S.pmode==="expand"?"macro":"expand";render();};
+  closeVarPop();withAnchor(()=>{S.pmode=S.pmode==="expand"?"macro":"expand";render();});};
+document.getElementById("btnMd").onclick=()=>{
+  closeVarPop();withAnchor(()=>{S.md=!S.md;render();});};
 document.getElementById("fileOpen").onchange=e=>e.target.files[0]&&importFile(e.target.files[0]);
 document.getElementById("fileSwap").onchange=e=>e.target.files[0]&&importFile(e.target.files[0]);
 document.getElementById("tabList").onclick=()=>setView("list");
 document.getElementById("tabPrev").onclick=()=>setView("preview");
-document.getElementById("btnHide").onclick=()=>{S.hideOff=!S.hideOff;render();};
+document.getElementById("btnHide").onclick=()=>withAnchor(()=>{S.hideOff=!S.hideOff;render();});
 document.getElementById("btnAdd").onclick=addEntry;
 document.getElementById("btnSelect").onclick=()=>{
   S.selecting=!S.selecting;S.selected=[];S.moving=false;render();
@@ -1036,6 +1263,7 @@ document.addEventListener("click",e=>{
 /* 静态图标 */
 document.getElementById("btnTypo").innerHTML=IC.type;
 document.getElementById("btnInfo").innerHTML=IC.info;
+document.getElementById("btnMd").innerHTML=IC.md;
 document.getElementById("btnUndo").innerHTML=IC.undo;
 document.getElementById("btnRedo").innerHTML=IC.redo;
 document.getElementById("btnAdd").innerHTML=IC.plus;
@@ -1063,7 +1291,5 @@ document.getElementById("lblImport").insertAdjacentHTML("afterbegin",IC.import);
   }
 })();
 </script>
-  <script data-goatcounter="https://sillyfish.goatcounter.com/count"
-        async src="//gc.zgo.at/count.js"></script>
 </body>
 </html>
