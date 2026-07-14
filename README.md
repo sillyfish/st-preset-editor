@@ -2,7 +2,7 @@
 
 适用于编辑 [SillyTavern](https://github.com/SillyTavern/SillyTavern) 预设JSON的小工具，在手机浏览器上改预设（电脑也可用）。
 
-[点击直达编辑器](https://sillyfish.github.io/st-preset-editor/），或用浏览器打开 `st-preset-editor.html`。
+ [点击直达编辑器](https://sillyfish.github.io/st-preset-editor/)，或用chorme浏览器打开 `st-preset-editor.html`文件。
 
 界面内点右上角的 **“i”** 有使用说明。
 
