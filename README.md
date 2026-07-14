@@ -1,6 +1,10 @@
 # st-preset-editor
 
-一个给 [SillyTavern](https://github.com/SillyTavern/SillyTavern) 预设 JSON 用的小工具，专门方便在**手机浏览器**上改预设（电脑也可用）。
+适用于编辑 [SillyTavern](https://github.com/SillyTavern/SillyTavern) 预设JSON的小工具，在手机浏览器上改预设（电脑也可用）。
+
+[点击直达编辑器](https://sillyfish.github.io/st-preset-editor/），或用浏览器打开 `st-preset-editor.html`。
+
+界面内点右上角的 **“i”** 有使用说明。
 
 ## 特点
 
@@ -13,8 +17,5 @@
 
 本站使用 GoatCounter 统计访问量，不使用 cookie，不采集个人信息。
 
-## 用法
-
-直接用浏览器打开 `st-preset-editor.html`。点右上角的 **“i”** 有使用说明——尤其是「点左侧竖线开关」「点条目名右缘跳预览」这类不太直观的操作。
 
 🐟
